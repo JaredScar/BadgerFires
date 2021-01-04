@@ -1,5 +1,7 @@
 # BadgerFires
-## Badger's Discord Community
+
+## Jared's Developer Community [Discord]
+[![Developer Discord](https://discordapp.com/api/guilds/597445834153525298/widget.png?style=banner4)](https://discord.com/invite/WjB5VFz)
 
 ## What is it?
 I always see people asking for Fire scripts. The ones people usually use have tons of bugs and/or are broken, so I decided to create one that actually worked well with a lot of nice features to it. Hopefully you all can find some use out of it.
