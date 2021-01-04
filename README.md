@@ -6,7 +6,7 @@
 ## What is it?
 I always see people asking for Fire scripts. The ones people usually use have tons of bugs and/or are broken, so I decided to create one that actually worked well with a lot of nice features to it. Hopefully you all can find some use out of it.
 ## All I ask
-I make plenty of resources for these forums free of charge all for everyone's convenience. As a recently graduated college student I will be looking for a job soon, so having a following on GitHub really looks good to recruiters. In return for my efforts of benefitting this community, I hope you all can pay it forward by giving me a follow on my GitHub, that's all. Thanks.
+I make plenty of resources for these forums free of charge all for everyone's convenience. As a recently graduated college student I will be looking for a job soon, so having a following on GitHub really looks good to recruiters. In return for my efforts that benefit this community, I hope you all can pay it forward by giving me a follow on my GitHub, that's all. Thanks.
 
 ## Commands
 `/fire start <inFrontDistance> <size> <density> <flameScale>` - Starts a fire
