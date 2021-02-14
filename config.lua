@@ -1,7 +1,8 @@
 Config = {
-    MaxSize = 5,
-    MaxDensity = 5,
-    MaxFlameScale = 5,
+    ParticleEffect = "ent_ray_ch2_farm_fire_dble",
+    MaxSize = 500,
+    MaxDensity = 500,
+    MaxFlameScale = 500,
     Concurrent = 1,
     AnyoneCanUse = true, -- Anyone can use it? -- THIS WILL DISABLE PERMISSIONS
 }

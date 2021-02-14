@@ -62,7 +62,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				.. tostring(maxFlameScale));
 				return;
 			end
-			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5]);
+			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5], src);
 			FireTracker[src] = concurrent + 1;
 			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^3A fire has been started...');
 			return;
@@ -123,7 +123,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				.. tostring(maxFlameScale));
 				return;
 			end
-			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5]);
+			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5], src);
 			FireTracker[src] = concurrent + 1;
 			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^3A fire has been started...');
 			return;
@@ -141,7 +141,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				FireTracker[src] = concurrent - 1;
 			end
 		end
-		TriggerClientEvent("Fire:stop", src, args[2]);
+			TriggerClientEvent("Fire:stop", -1, args[2], src);
 	elseif args[1] == "preview" then 
 		if #args ~= 5 then 
 			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^2Preview Mode ^3has been ^1DISABLED^3...');

@@ -57,7 +57,8 @@ AddEventHandler("Fire:preview", Fire.Preview);
 
 
 fireTrackID = 0;
-function Fire.start(distance, area, density, scale)
+fireStillLoading = false;
+function Fire.start(distance, area, density, scale, id)
 	local heading = GetEntityHeading(GetPlayerPed(-1));
 	local localPos = GetEntityCoords(GetPlayerPed(-1));
 	local x = localPos.x + math.cos(math.rad(heading+90)) * distance;
@@ -77,7 +78,8 @@ function Fire.start(distance, area, density, scale)
 			if (GetDistanceBetweenCoords(x, y, z, area_x, area_y, 0, false) < area/2) then
 				local _, area_z = GetGroundZFor_3dCoord(area_x, area_y, localPos.z + 5.0);
 				-- Fire.newFire(area_x, area_y, area_z, scale);
-				TriggerServerEvent("Fire:newFire", area_x, area_y, area_z, scale, PlayerPedId(), fireTrackID);
+				Wait(1);
+				TriggerServerEvent("Fire:newFire", area_x, area_y, area_z, scale, id, fireTrackID);
 			end
 			area_y = area_y + step;
 		end
@@ -87,7 +89,7 @@ function Fire.start(distance, area, density, scale)
 end
 RegisterNetEvent("Fire:start");
 AddEventHandler("Fire:start", Fire.start);
-
+Fire.Flames = {};
 function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)
 	-- Load the fire particle
 	if (not HasNamedPtfxAssetLoaded("core")) then
@@ -105,7 +107,7 @@ function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)
 	UseParticleFxAssetNextCall("core");
 
 	-- Make both a standard fire and a big fire particle on top of it
-	local fxHandle = StartParticleFxLoopedAtCoord("ent_ray_ch2_farm_fire_dble", posX, posY, posZ + 0.25, 0.0, 0.0, 0.0, scale + 0.001, false, false, false, false);
+	local fxHandle = StartParticleFxLoopedAtCoord(Config.ParticleEffect, posX, posY, posZ + 0.25, 0.0, 0.0, 0.0, scale + 0.001, false, false, false, false);
 	local fireHandle = StartScriptFire(posX, posY, posZ + 0.25, 0, false);
 	Fire.Flames[#Fire.Flames + 1] = {fire = fireHandle, ptfx = fxHandle, pos = {x = posX, y = posY, z = posZ + 0.05}, starter = started, fireTracked = fireTrackID};
 end
@@ -128,9 +130,10 @@ RegisterCommand("fires", function(source, args, rawCommand)
 	  });
 	local tracked = {};
 	for i, flame in pairs(Fire.Flames) do
-		if flame.starter == PlayerPedId() then 
+		if flame.starter == GetPlayerServerId(GetPlayerID()) then 
 			-- It's their fire
 			local trackID = flame.fireTracked;
+			print("[FireScript] Fire still exists [" .. tostring(i) .. "] and has handle: " ..tostring(trackID) );
 			if tracked[trackID] == nil then 
 				tracked[trackID] = true;
 				local distance = GetDistanceBetweenCoords(flame.pos.x, flame.pos.y, flame.pos.z, coords.x, coords.y, coords.z, 1);
@@ -143,27 +146,86 @@ RegisterCommand("fires", function(source, args, rawCommand)
 		end
 	end
 end)
+function isFireStillActive(trackID, id)
+	for i, flame in pairs(Fire.Flames) do
+		if flame ~= nil then 
+			if flame.starter == id and flame.fireTracked == trackID then
+				return true; 
+			end
+		end
+	end
+	return false;
+end
 
 RegisterNetEvent("Fire:stopByUser");
 AddEventHandler("Fire:stopByUser", Fire.stopByUser);
 
-function Fire.stopByUser()
-	for i, flame in pairs(Fire.Flames) do
-		if flame.starter == PlayerPedId() then 
-			if DoesParticleFxLoopedExist(flame.ptfx) then
-				StopParticleFxLooped(flame.ptfx, 1);
-				RemoveParticleFx(flame.ptfx, 1);
+function GetPlayerID()
+	for _, i in ipairs(GetActivePlayers()) do
+        if NetworkIsPlayerActive(i) then
+			if GetPlayerPed(i) == GetPlayerPed(-1) then
+				return i;
 			end
-			RemoveScriptFire(flame.fire);
-			StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 20.0);
+		end
+    end
+end
+
+function Fire.stopByUser(id)
+	for i, flame in pairs(Fire.Flames) do
+		local continue = true;
+		if flame == nil then 
 			table.remove(Fire.Flames, i);
+			continue = false;
+		end
+		if continue then
+			if flame.starter == id then 
+				if DoesParticleFxLoopedExist(flame.ptfx) then
+					StopParticleFxLooped(flame.ptfx, 1);
+					RemoveParticleFx(flame.ptfx, 1);
+				end
+				RemoveScriptFire(flame.fire);
+				StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 20.0);
+				table.remove(Fire.Flames, i);
+			end
 		end
 	end
 end
 
-function Fire.stop(fireHandle)
+function Fire.stop(fireHandle, id)
+	local toRemove = {};
+	local size = 0;
+	for i, flame in pairs(Fire.Flames) do 
+		size = size + 1;
+	end
 	for i, flame in pairs(Fire.Flames) do
-		if tonumber(flame.fireTracked) == tonumber(fireHandle) then 
+		local continue = true;
+		print("[FireScript] Flame is: " .. tostring(flame) )
+		print("FireScript Size of Fire.Flames is: " .. size)
+		if flame ~= nil then 
+			if tonumber(flame.fireTracked) == tonumber(fireHandle) and tonumber(flame.starter) == tonumber(id) then 
+				if DoesParticleFxLoopedExist(flame.ptfx) then
+					StopParticleFxLooped(flame.ptfx, 1);
+					RemoveParticleFx(flame.ptfx, 1);
+					print("[FireScript] Removed fire [" .. tostring(i) .. "]" );
+				end
+				RemoveScriptFire(flame.fire);
+				StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 100.0);
+				toRemove[i] = true;
+			end
+		end
+	end
+	for i, val in pairs(toRemove) do 
+		Fire.Flames[i] = nil;
+	end
+end
+function Fire.stopAll()
+	for i, flame in pairs(Fire.Flames) do
+		local continue = true;
+		if flame == nil then 
+			table.remove(Fire.Flames, i);
+			continue = false;
+		end
+		if continue then
 			if DoesParticleFxLoopedExist(flame.ptfx) then
 				StopParticleFxLooped(flame.ptfx, 1);
 				RemoveParticleFx(flame.ptfx, 1);
@@ -172,17 +234,6 @@ function Fire.stop(fireHandle)
 			StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 20.0);
 			table.remove(Fire.Flames, i);
 		end
-	end
-end
-function Fire.stopAll()
-	for i, flame in pairs(Fire.Flames) do
-		if DoesParticleFxLoopedExist(flame.ptfx) then
-			StopParticleFxLooped(flame.ptfx, 1);
-			RemoveParticleFx(flame.ptfx, 1);
-		end
-		RemoveScriptFire(flame.fire);
-		StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 20.0);
-		table.remove(Fire.Flames, i);
 	end
 end
 RegisterNetEvent("Fire:stop");
