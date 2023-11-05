@@ -1,4 +1,24 @@
-FireTracker = {}
+FireTracker = {};
+RandomFireTimer = Config.RandomFireSpawningDelay; -- Need to wait this amount of time before trying to spawn a fire
+Citizen.CreateThread(function()
+	if (Config.RandomFireSpawning) then 
+		while (true) do 
+			Citizen.Wait(RandomFireTimer);
+			-- The timer has expired, we want to randomly spawn a fire maybe...
+			local rand = math.random(100);
+			if (rand <= Config.RandomFireChance) then 
+				-- It hit under the random fire chance, start a fire
+				local randomLocation = Config.RandomFireLocations[math.random(#Config.RandomFireLocations)];
+				local x = randomLocation.x;
+				local y = randomLocation.y;
+				local z = randomLocation.z;
+				local name = randomLocation.name;
+				-- TODO Spawn fire and announce it
+			end
+		end
+	end
+end)
+
 RegisterCommand("fire", function(source, args, rawCommand)
 	local src = source;
 	--[[
@@ -30,41 +50,38 @@ RegisterCommand("fire", function(source, args, rawCommand)
 		end
 		if size == nil or density == nil or flameScale == nil then 
 			-- Invalid
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided an invalid parameter type... They should all be numbers!');
+			TriggerClientEvent('chatMessage', src, Config.Messages.Error.InvalidParams);
 			return;
 		end
 		if Config.AnyoneCanUse then 
 			local maxConcurrent = Config.Concurrent;
 			if concurrent == maxConcurrent then 
 				-- They have enough fires running already
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You have enough fires active. You are only allowed to have ^3' 
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)); 
 				.. tostring(maxConcurrent));
 				return;
 			end
 			local maxSize = Config.MaxSize;
 			if size > maxSize then 
 				-- Too big of size
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5size^1... You are only allowed sizes up to ^3' 
-				.. tostring(maxSize));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.SizeTooBig:gsub("{MAX_SIZE}", tostring(maxSize)));
 				return;
 			end
 			local maxDensity = Config.MaxDensity;
 			if density > maxDensity then 
 				-- Too big of density
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5density^1... You are only allowed densities up to ^3' 
-				.. tostring(maxDensity));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.DensityTooBig:gsub("{MAX_DENSITY}", tostring(maxDensity)));
 				return;
 			end
 			local maxFlameScale = Config.MaxFlameScale;
 			if flameScale > maxFlameScale then 
 				-- Too big of flame scale
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5flameScale^1... You are only allowed flameScales up to ^3' 
-				.. tostring(maxFlameScale));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.FlameScaleTooBig:gsub("{MAX_FLAMES}", tostring(maxFlameScale)));
 				return;
 			end
 			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5], src);
 			FireTracker[src] = concurrent + 1;
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^3A fire has been started...');
+			TriggerClientEvent('chatMessage', src, Config.Messages.General.FireStarting);
 			return;
 		else 
 			-- Use permission nodes 
@@ -96,36 +113,33 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				concurrent = 0;
 			end
 			if not hasPerms then
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You have no permission to start fires...'); 
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.No_Permission); 
 				return;
 			end
 			if concurrent == maxConcurrent then 
 				-- They have enough fires running already
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You have enough fires active. You are only allowed to have ^3' 
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)); 
 				.. tostring(maxConcurrent));
 				return;
 			end
 			if size > maxSize then 
 				-- Too big of size
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5size^1... You are only allowed sizes up to ^3' 
-				.. tostring(maxSize));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.SizeTooBig:gsub("{MAX_SIZE}", tostring(maxSize)));
 				return;
 			end
 			if density > maxDensity then 
 				-- Too big of density
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5density^1... You are only allowed densities up to ^3' 
-				.. tostring(maxDensity));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.DensityTooBig:gsub("{MAX_DENSITY}", tostring(maxDensity)));
 				return;
 			end
 			if flameScale > maxFlameScale then 
 				-- Too big of flame scale
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5flameScale^1... You are only allowed flameScales up to ^3' 
-				.. tostring(maxFlameScale));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.FlameScaleTooBig:gsub("{MAX_FLAMES}", tostring(maxFlameScale)));
 				return;
 			end
 			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5], src);
 			FireTracker[src] = concurrent + 1;
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^3A fire has been started...');
+			TriggerClientEvent('chatMessage', src, Config.Messages.General.FireStarting);
 			return;
 		end
 	elseif args[1] == "stop" then 
@@ -153,29 +167,26 @@ RegisterCommand("fire", function(source, args, rawCommand)
 		local flameScale = tonumber(args[5]);
 		if size == nil or density == nil or flameScale == nil then 
 			-- Invalid
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided an invalid parameter type... They should all be numbers!');
+			TriggerClientEvent('chatMessage', src, Config.Messages.Error.InvalidParams);
 			return;
 		end
 		if Config.AnyoneCanUse then 
 			local maxSize = Config.MaxSize;
 			if size > maxSize then 
 				-- Too big of size
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5size^1... You are only allowed sizes up to ^3' 
-				.. tostring(maxSize));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.SizeTooBig:gsub("{MAX_SIZE}", tostring(maxSize)));
 				return;
 			end
 			local maxDensity = Config.MaxDensity;
 			if density > maxDensity then 
 				-- Too big of density
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5density^1... You are only allowed densities up to ^3' 
-				.. tostring(maxDensity));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.DensityTooBig:gsub("{MAX_DENSITY}", tostring(maxDensity)));
 				return;
 			end
 			local maxFlameScale = Config.MaxFlameScale;
 			if flameScale > maxFlameScale then 
 				-- Too big of flame scale
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5flameScale^1... You are only allowed flameScales up to ^3' 
-				.. tostring(maxFlameScale));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.FlameScaleTooBig:gsub("{MAX_FLAMES}", tostring(maxFlameScale)));
 				return;
 			end
 			TriggerClientEvent("Fire:preview", src, args[2], args[3], args[4], args[5], true);
@@ -203,38 +214,35 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				end 
 			end
 			if not hasPerms then
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You have no permission to preview fires...'); 
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.No_PermissionPreviewMode); 
 				return;
 			end
 			if size > maxSize then 
 				-- Too big of size
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5size^1... You are only allowed sizes up to ^3' 
-				.. tostring(maxSize));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.SizeTooBig:gsub("{MAX_SIZE}", tostring(maxSize)));
 				return;
 			end
 			if density > maxDensity then 
 				-- Too big of density
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5density^1... You are only allowed densities up to ^3' 
-				.. tostring(maxDensity));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.DensityTooBig:gsub("{MAX_DENSITY}", tostring(maxDensity)));
 				return;
 			end
 			if flameScale > maxFlameScale then 
 				-- Too big of flame scale
-				TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You provided to big of a ^5flameScale^1... You are only allowed flameScales up to ^3' 
-				.. tostring(maxFlameScale));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.FlameScaleTooBig:gsub("{MAX_FLAMES}", tostring(maxFlameScale)));
 				return;
 			end
 			TriggerClientEvent("Fire:preview", src, args[2], args[3], args[4], args[5], true);
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^2Preview Mode ^3has been ^2ENABLED^3...');
+			TriggerClientEvent('chatMessage', src, Config.Messages.General.PreviewModeEnabled);
 			return;
 		end
 	elseif args[1] == "stopall" then 
 		if IsPlayerAceAllowed(src, "BadgerFires.StopAll") then 
 			FireTracker = {};
 			TriggerClientEvent("Fire:stopall", -1, args[2]);
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^3All fires have been extinguished...!');
+			TriggerClientEvent('chatMessage', src, Config.Messages.General.AllFiresStopped);
 		else 
-			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^1ERROR: You do not have permission to run this command...');
+			TriggerClientEvent('chatMessage', src, Config.Messages.Error.No_PermissionStopAll);
 		end
 	end
 end)
@@ -254,7 +262,12 @@ function sendUsage(source)
 end
 
 function newFire(posX, posY, posZ, scale, starter, fireTrackID)
+	TriggerClientEvent('chatMessage', starter, Config.Messages.General.FireStarted:gsub("{STARTER_NAME}", GetPlayerName(starter)):gsub("{STARTER_ID}", starter));
 	TriggerClientEvent("Fire:newFire", -1, posX, posY, posZ, scale, starter, fireTrackID);
 end
 RegisterServerEvent("Fire:newFire");
 AddEventHandler("Fire:newFire", newFire);
+
+RegisterServerEvent('Fire:Client:RequestCurrent')
+AddEventHandler('Fire:Client:RequestCurrent', function() 
+end)

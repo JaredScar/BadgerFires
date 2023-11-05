@@ -5,6 +5,16 @@ Fire.__index = Fire;
 Fire.Preview = false;
 Fire.Flames = {};
 
+Citizen.CreateThread(function()
+	Citizen.Wait(3000);
+	-- We need to get the fires for the client side, to display them...
+	TriggerServerEvent('Fire:Client:RequestCurrent');
+end)
+RegisterNetEvent('Fire:Client:CurrentReturn')
+AddEventHandler('Fire:Client:CurrentReturn', function(flames)
+	Fire.Flames = flames;
+end)
+
 function Fire.Preview(distance, area, density, scale, toggle)
 	Citizen.CreateThread(function()
 		Fire.Preview = false;
@@ -71,25 +81,37 @@ function Fire.start(distance, area, density, scale, id)
 	local step = math.ceil(area / density);
 
 	-- Loop through a square, with steps based on density
-	while area_x <= area_x_max do
-		area_y = y - area/2;
-		while area_y <= area_y_max do
-			-- Check the distance to the center to make it into a circle only
-			if (GetDistanceBetweenCoords(x, y, z, area_x, area_y, 0, false) < area/2) then
-				local _, area_z = GetGroundZFor_3dCoord(area_x, area_y, localPos.z + 5.0);
-				-- Fire.newFire(area_x, area_y, area_z, scale);
-				Wait(1);
-				TriggerServerEvent("Fire:newFire", area_x, area_y, area_z, scale, id, fireTrackID);
+	Citizen.CreateThread(function()
+		local x_arr = {};
+		local y_arr = {};
+		local z_arr = {};
+		Citizen.Wait(0);
+		while area_x <= area_x_max do
+			Citizen.Wait(0);
+			area_y = y - area/2;
+			while area_y <= area_y_max do
+				-- Check the distance to the center to make it into a circle only
+				if (GetDistanceBetweenCoords(x, y, z, area_x, area_y, 0, false) < area/2) then
+					local _, area_z = GetGroundZFor_3dCoord(area_x, area_y, localPos.z + 5.0);
+					-- Fire.newFire(area_x, area_y, area_z, scale);
+					Wait(1);
+					table.insert(x_arr, area_x);
+					table.insert(y_arr, area_y);
+					table.insert(z_arr, area_z);
+					--TriggerServerEvent("Fire:newFire", area_x, area_y, area_z, scale, id, fireTrackID);
+				end
+				area_y = area_y + step;
 			end
-			area_y = area_y + step;
+			area_x = area_x + step;
 		end
-		area_x = area_x + step;
-	end
+		TriggerServerEvent("Fire:newFire", x_arr, y_arr, z_arr, scale, id, fireTrackID);
+	end)
 	fireTrackID = fireTrackID + 1;
 end
 RegisterNetEvent("Fire:start");
 AddEventHandler("Fire:start", Fire.start);
 Fire.Flames = {};
+Fire.Ended = {};
 function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)
 	-- Load the fire particle
 	if (not HasNamedPtfxAssetLoaded("core")) then
@@ -107,9 +129,26 @@ function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)
 	UseParticleFxAssetNextCall("core");
 
 	-- Make both a standard fire and a big fire particle on top of it
-	local fxHandle = StartParticleFxLoopedAtCoord(Config.ParticleEffect, posX, posY, posZ + 0.25, 0.0, 0.0, 0.0, scale + 0.001, false, false, false, false);
-	local fireHandle = StartScriptFire(posX, posY, posZ + 0.25, 0, false);
-	Fire.Flames[#Fire.Flames + 1] = {fire = fireHandle, ptfx = fxHandle, pos = {x = posX, y = posY, z = posZ + 0.05}, starter = started, fireTracked = fireTrackID};
+	local currentFlames = Fire.Flames;
+	Citizen.CreateThread(function()
+		Citizen.Wait(0);
+		local curInd = 1;
+		while (curInd < #posX and Fire.Ended[fireTrackID] == nil) do
+			Citizen.Wait(0);
+			local x2 = tonumber(posX[curInd]);
+			local y2 = tonumber(posY[curInd]);
+			local z2 = tonumber(posZ[curInd]);
+			if (x2 ~= nil and y2 ~= nil and z2 ~= nil) then
+			end
+			local fxHandle = StartParticleFxLoopedAtCoord(Config.ParticleEffect, x2, y2, z2 + 0.25, 0.0, 0.0, 0.0, scale + 0.001, false, false, false, false);
+			local fireHandle = StartScriptFire(x2, y2, z2 + 0.25, 0, false);
+			currentFlames[#currentFlames + 1] = {fire = fireHandle, ptfx = fxHandle, pos = {x = x2, y = y2, z = z2 + 0.05}, starter = started, fireTracked = fireTrackID};		
+			curInd = curInd + 1;
+		end
+		if (Fire.Ended[fireTrackID] == nil) then 
+			Fire.Flames = currentFlames;
+		end
+	end)
 end
 RegisterNetEvent("Fire:newFire");
 AddEventHandler("Fire:newFire", Fire.newFire);
@@ -133,7 +172,6 @@ RegisterCommand("fires", function(source, args, rawCommand)
 		if flame.starter == GetPlayerServerId(GetPlayerID()) then 
 			-- It's their fire
 			local trackID = flame.fireTracked;
-			print("[FireScript] Fire still exists [" .. tostring(i) .. "] and has handle: " ..tostring(trackID) );
 			if tracked[trackID] == nil then 
 				tracked[trackID] = true;
 				local distance = GetDistanceBetweenCoords(flame.pos.x, flame.pos.y, flame.pos.z, coords.x, coords.y, coords.z, 1);
@@ -185,44 +223,43 @@ function Fire.stopByUser(id)
 				end
 				RemoveScriptFire(flame.fire);
 				StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 20.0);
-				table.remove(Fire.Flames, i);
+				Fire.Flames[i] = nil;
 			end
 		end
 	end
 end
 
+local lockingMechanism = false;
+
 function Fire.stop(fireHandle, id)
-	local toRemove = {};
+	lockingMechanism = true;
+	Fire.Ended[tonumber(fireHandle)] = true;
+	Citizen.Wait(100);
 	local size = 0;
 	for i, flame in pairs(Fire.Flames) do 
 		size = size + 1;
 	end
 	for i, flame in pairs(Fire.Flames) do
 		local continue = true;
-		print("[FireScript] Flame is: " .. tostring(flame) )
-		print("FireScript Size of Fire.Flames is: " .. size)
-		if flame ~= nil then 
-			if tonumber(flame.fireTracked) == tonumber(fireHandle) and tonumber(flame.starter) == tonumber(id) then 
+		if flame ~= nil then
+			if tonumber(flame.fireTracked) == tonumber(fireHandle) and tonumber(flame.starter) == tonumber(id) then
 				if DoesParticleFxLoopedExist(flame.ptfx) then
 					StopParticleFxLooped(flame.ptfx, 1);
 					RemoveParticleFx(flame.ptfx, 1);
-					print("[FireScript] Removed fire [" .. tostring(i) .. "]" );
 				end
 				RemoveScriptFire(flame.fire);
 				StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 100.0);
-				toRemove[i] = true;
+				Fire.Flames[i] = nil;
 			end
 		end
 	end
-	for i, val in pairs(toRemove) do 
-		Fire.Flames[i] = nil;
-	end
+	lockingMechanism = false;
 end
 function Fire.stopAll()
 	for i, flame in pairs(Fire.Flames) do
 		local continue = true;
 		if flame == nil then 
-			table.remove(Fire.Flames, i);
+			Fire.Flames[i] = nil;
 			continue = false;
 		end
 		if continue then
@@ -232,7 +269,7 @@ function Fire.stopAll()
 			end
 			RemoveScriptFire(flame.fire);
 			StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 20.0);
-			table.remove(Fire.Flames, i);
+			Fire.Flames[i] = nil;
 		end
 	end
 end
@@ -243,16 +280,18 @@ AddEventHandler("Fire:stopall", Fire.stopAll);
 
 Citizen.CreateThread(function()
 	while true do
-		Wait(10);
+		Wait(100);
 		-- Loop through all the fires
-		for i, flame in pairs(Fire.Flames) do
-			if DoesParticleFxLoopedExist(flame.ptfx) then
-				-- If there are no more 'normal' fire next to the big fire particle, remove the particle
-				if (GetNumberOfFiresInRange(flame.pos.x, flame.pos.y, flame.pos.z, 0.2) <= 1) then
-					StopParticleFxLooped(flame.ptfx, 1);
-					RemoveParticleFx(flame.ptfx, 1);
-					RemoveScriptFire(flame.fire);
-					table.remove(Fire.Flames, i);
+		if not lockingMechanism then 
+			for i, flame in ipairs(Fire.Flames) do
+				if DoesParticleFxLoopedExist(flame.ptfx) then
+					-- If there are no more 'normal' fire next to the big fire particle, remove the particle
+					if (GetNumberOfFiresInRange(flame.pos.x, flame.pos.y, flame.pos.z, 0.2) <= 1) then
+						StopParticleFxLooped(flame.ptfx, 1);
+						RemoveParticleFx(flame.ptfx, 1);
+						RemoveScriptFire(flame.fire);
+						Fire.Flames[i] = nil;
+					end
 				end
 			end
 		end
