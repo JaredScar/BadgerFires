@@ -9,9 +9,21 @@ Config = {
     RandomFireSpawningDelay = 1, -- After a fire randomly spawns, 1 minutes must pass before another one can be spawned
     RandomFireChance = 90, -- 90% chance of a fire starting
     RandomFireLocations = {
-        { name = 'PD', x = 0, y = 0, z = 0 },
-        { name = 'PD2', x = 0, y = 0, z = 0 },
+        { name = 'Wearhouse @ 35', x = 53.84, y = -2675.58, z = 6.01, size = 30, density = 30, flameScale = 30 },
+        { name = 'Clothing Store @ 134', x = 76.97, y = -1392.78, z = 29.38, size = 30, density = 30, flameScale = 30 },
+        { name = 'DMV @ 140', x = 208.13, y = -1391.37, z = 30.58, size = 30, density = 30, flameScale = 30 },
+        { name = 'Ammunation @ 200', x = 11.72, y = -1107.4, z = 29.8, size = 30, density = 30, flameScale = 30 },
+        { name = 'Repo Yard @ 394', x = -190.69, y = -1164.15, z = 23.67, size = 30, density = 30, flameScale = 30 },
+        { name = 'Auto Garage @ 90', x = -1154.43, y = -2007.64, z = 13.18, size = 30, density = 30, flameScale = 30 },
+        { name = 'Open Garage @ 388', x = -422.48, y = -1683.1, z = 19.03, size = 30, density = 30, flameScale = 30 },
+        { name = 'Tattoo Vinewood @ 575', x = 323.85, y = 181.41, z = 103.59, size = 30, density = 30, flameScale = 30 },
+        { name = 'Bay City Bank @ 323', x = -1308.58, y = -826.66, z = 17.15, size = 30, density = 30, flameScale = 30 },
+        { name = 'House being built @ 334', x = -1125.81, y = -960.89, z = 6.63, size = 30, density = 30, flameScale = 30 },
+        { name = 'Cafe @ 307', x = -1218.0, y = -1493.48, z = 4.37, size = 30, density = 30, flameScale = 30 },
+        { name = 'Booth on the pier @ 611', x = -1605.87, y = -1074.14, z = 13.02, size = 30, density = 30, flameScale = 30 },
+        { name = 'Church @ 631', x = -1680.76, y = -282.07, z = 51.86, size = 30, density = 30, flameScale = 30 },
     },
+    RandomFiresAllowedNearPlayers = true, -- If a random fire spawns, should it still trigger if players are within it?
     VehicleEngineFires = true
 }
 
