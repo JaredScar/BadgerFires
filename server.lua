@@ -13,7 +13,14 @@ Citizen.CreateThread(function()
 				local y = randomLocation.y;
 				local z = randomLocation.z;
 				local name = randomLocation.name;
-				-- TODO Spawn fire and announce it
+				local size = randomLocation.size;
+				local flameScale = randomLocation.flameScale;
+				local density = randomLocation.density;
+				-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
+				-- TODO
+				-- Spawn fire and announce it
+				TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale);
+				TriggerClientEvent('chatMessage', -1, Config.General.RandomFireAnnouncement:gsub("{NAME}", name));
 			end
 		end
 	end

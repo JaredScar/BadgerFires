@@ -108,8 +108,45 @@ function Fire.start(distance, area, density, scale, id)
 	end)
 	fireTrackID = fireTrackID + 1;
 end
+function Fire.startLocation(x, y, z, distance, area, density, scale, id)
+	local area_x = x - area/2;
+	local area_y = y - area/2;
+	local area_x_max = x + area/2;
+	local area_y_max = y + area/2;
+	local step = math.ceil(area / density);
+
+	-- Loop through a square, with steps based on density
+	Citizen.CreateThread(function()
+		local x_arr = {};
+		local y_arr = {};
+		local z_arr = {};
+		Citizen.Wait(0);
+		while area_x <= area_x_max do
+			Citizen.Wait(0);
+			area_y = y - area/2;
+			while area_y <= area_y_max do
+				-- Check the distance to the center to make it into a circle only
+				if (GetDistanceBetweenCoords(x, y, z, area_x, area_y, 0, false) < area/2) then
+					local _, area_z = GetGroundZFor_3dCoord(area_x, area_y, z + 5.0);
+					-- Fire.newFire(area_x, area_y, area_z, scale);
+					Wait(1);
+					table.insert(x_arr, area_x);
+					table.insert(y_arr, area_y);
+					table.insert(z_arr, area_z);
+				end
+				area_y = area_y + step;
+			end
+			area_x = area_x + step;
+		end
+	end)
+	fireTrackID = fireTrackID + 1;
+	-- Start new fire at location specified...
+	Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID)
+end
 RegisterNetEvent("Fire:start");
 AddEventHandler("Fire:start", Fire.start);
+RegisterNetEvent("Fire:startLocation");
+AddEventHandler("Fire:startLocation", Fire.startLocation);
 Fire.Flames = {};
 Fire.Ended = {};
 function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)

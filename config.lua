@@ -5,6 +5,8 @@ Config = {
     MaxFlameScale = 500,
     Concurrent = 1,
     AnyoneCanUse = true, -- Anyone can use it? -- THIS WILL DISABLE PERMISSIONS
+
+    --[[ BELOW CONFIG OPTIONS ARE IN PROGRESS (IN DEVELOPMENT) ]]--
     RandomFireSpawning = true, -- Fires spawn randomly?
     RandomFireSpawningDelay = 1, -- After a fire randomly spawns, 1 minutes must pass before another one can be spawned
     RandomFireChance = 90, -- 90% chance of a fire starting
@@ -24,7 +26,8 @@ Config = {
         { name = 'Church @ 631', x = -1680.76, y = -282.07, z = 51.86, size = 30, density = 30, flameScale = 30 },
     },
     RandomFiresAllowedNearPlayers = true, -- If a random fire spawns, should it still trigger if players are within it?
-    VehicleEngineFires = true
+    VehicleEngineFires = true -- Needs to be implemented...
+    --[[]]--
 }
 
 Config.Messages = {
