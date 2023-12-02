@@ -9,6 +9,16 @@ Citizen.CreateThread(function()
 	Citizen.Wait(3000);
 	-- We need to get the fires for the client side, to display them...
 	TriggerServerEvent('Fire:Client:RequestCurrent');
+	if (Config.VehicleEngineFires) then 
+		while (true) do 
+			Citizen.Wait(0);
+			local playerPed = GetPlayerPed(-1);
+			local veh = GetVehiclePedIsIn(playerPed);
+			if (GetVehicleHealthPercentage(veh) <= 0) then 
+				NetworkExplodeVehicle(veh, true, false);
+			end
+		end
+	end
 end)
 RegisterNetEvent('Fire:Client:CurrentReturn')
 AddEventHandler('Fire:Client:CurrentReturn', function(flames)

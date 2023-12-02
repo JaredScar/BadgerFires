@@ -8,19 +8,27 @@ Citizen.CreateThread(function()
 			local rand = math.random(100);
 			if (rand <= Config.RandomFireChance) then 
 				-- It hit under the random fire chance, start a fire
-				local randomLocation = Config.RandomFireLocations[math.random(#Config.RandomFireLocations)];
-				local x = randomLocation.x;
-				local y = randomLocation.y;
-				local z = randomLocation.z;
-				local name = randomLocation.name;
-				local size = randomLocation.size;
-				local flameScale = randomLocation.flameScale;
-				local density = randomLocation.density;
-				-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
-				-- TODO
-				-- Spawn fire and announce it
-				TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale);
-				TriggerClientEvent('chatMessage', -1, Config.General.RandomFireAnnouncement:gsub("{NAME}", name));
+				local spawnedFire = false;
+				while (not spawnedFire) do 
+					local randomFireIndex = math.random(#Config.RandomFireLocations);
+					local randomLocation = Config.RandomFireLocations[randomFireIndex];
+					local x = randomLocation.x;
+					local y = randomLocation.y;
+					local z = randomLocation.z;
+					local name = randomLocation.name;
+					local size = randomLocation.size;
+					local flameScale = randomLocation.flameScale;
+					local density = randomLocation.density;
+					-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
+					if (Config.RandomFiresAllowedNearPlayers) then 
+						-- We need to check if players are in fire, then not spawn it...
+					else 
+						-- Spawn fire and announce it
+						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale);
+						TriggerClientEvent('chatMessage', -1, Config.General.RandomFireAnnouncement:gsub("{NAME}", name));
+						spawnedFire = true;
+					end
+				end
 			end
 		end
 	end
