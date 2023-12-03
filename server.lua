@@ -3,31 +3,27 @@ RandomFireTimer = Config.RandomFireSpawningDelay; -- Need to wait this amount of
 Citizen.CreateThread(function()
 	if (Config.RandomFireSpawning) then 
 		while (true) do 
-			Citizen.Wait(RandomFireTimer);
+			Citizen.Wait(RandomFireTimer * (1000 * 60));
 			-- The timer has expired, we want to randomly spawn a fire maybe...
 			local rand = math.random(100);
 			if (rand <= Config.RandomFireChance) then 
 				-- It hit under the random fire chance, start a fire
-				local spawnedFire = false;
-				while (not spawnedFire) do 
-					local randomFireIndex = math.random(#Config.RandomFireLocations);
-					local randomLocation = Config.RandomFireLocations[randomFireIndex];
-					local x = randomLocation.x;
-					local y = randomLocation.y;
-					local z = randomLocation.z;
-					local name = randomLocation.name;
-					local size = randomLocation.size;
-					local flameScale = randomLocation.flameScale;
-					local density = randomLocation.density;
-					-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
-					if (Config.RandomFiresAllowedNearPlayers) then 
-						-- We need to check if players are in fire, then not spawn it...
-					else 
-						-- Spawn fire and announce it
-						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale);
-						TriggerClientEvent('chatMessage', -1, Config.General.RandomFireAnnouncement:gsub("{NAME}", name));
-						spawnedFire = true;
-					end
+				local randomFireIndex = math.random(#Config.RandomFireLocations);
+				local randomLocation = Config.RandomFireLocations[randomFireIndex];
+				local x = randomLocation.x;
+				local y = randomLocation.y;
+				local z = randomLocation.z;
+				local name = randomLocation.name;
+				local size = randomLocation.size;
+				local flameScale = randomLocation.flameScale;
+				local density = randomLocation.density;
+				-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
+				if (Config.RandomFiresAllowedNearPlayers) then 
+					-- We need to check if players are in fire, then not spawn it...
+				else 
+					-- Spawn fire and announce it
+					TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale);
+					TriggerClientEvent('chatMessage', -1, Config.General.RandomFireAnnouncement:gsub("{NAME}", name));
 				end
 			end
 		end
@@ -72,8 +68,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 			local maxConcurrent = Config.Concurrent;
 			if concurrent == maxConcurrent then 
 				-- They have enough fires running already
-				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)); 
-				.. tostring(maxConcurrent));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)));
 				return;
 			end
 			local maxSize = Config.MaxSize;
@@ -133,8 +128,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 			end
 			if concurrent == maxConcurrent then 
 				-- They have enough fires running already
-				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)); 
-				.. tostring(maxConcurrent));
+				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)));
 				return;
 			end
 			if size > maxSize then 

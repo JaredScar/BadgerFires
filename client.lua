@@ -148,10 +148,10 @@ function Fire.startLocation(x, y, z, distance, area, density, scale, id)
 			end
 			area_x = area_x + step;
 		end
+		-- Start new fire at location specified...
+		Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID)
 	end)
 	fireTrackID = fireTrackID + 1;
-	-- Start new fire at location specified...
-	Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID)
 end
 RegisterNetEvent("Fire:start");
 AddEventHandler("Fire:start", Fire.start);
