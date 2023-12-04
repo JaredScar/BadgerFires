@@ -114,11 +114,11 @@ function Fire.start(distance, area, density, scale, id)
 			end
 			area_x = area_x + step;
 		end
-		TriggerServerEvent("Fire:newFire", x_arr, y_arr, z_arr, scale, id, fireTrackID);
+		TriggerServerEvent("Fire:newFire", x_arr, y_arr, z_arr, scale, id, fireTrackID, nil);
 	end)
 	fireTrackID = fireTrackID + 1;
 end
-function Fire.startLocation(x, y, z, distance, area, density, scale, id)
+function Fire.startLocation(x, y, z, distance, area, density, scale, locationInd)
 	local area_x = x - area/2;
 	local area_y = y - area/2;
 	local area_x_max = x + area/2;
@@ -149,7 +149,7 @@ function Fire.startLocation(x, y, z, distance, area, density, scale, id)
 			area_x = area_x + step;
 		end
 		-- Start new fire at location specified...
-		Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID)
+		Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID, locationInd)
 	end)
 	fireTrackID = fireTrackID + 1;
 end
@@ -159,7 +159,7 @@ RegisterNetEvent("Fire:startLocation");
 AddEventHandler("Fire:startLocation", Fire.startLocation);
 Fire.Flames = {};
 Fire.Ended = {};
-function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)
+function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID, locationIndex)
 	-- Load the fire particle
 	if (not HasNamedPtfxAssetLoaded("core")) then
 		RequestNamedPtfxAsset("core");
@@ -189,12 +189,10 @@ function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID)
 			end
 			local fxHandle = StartParticleFxLoopedAtCoord(Config.ParticleEffect, x2, y2, z2 + 0.25, 0.0, 0.0, 0.0, scale + 0.001, false, false, false, false);
 			local fireHandle = StartScriptFire(x2, y2, z2 + 0.25, 0, false);
-			currentFlames[#currentFlames + 1] = {fire = fireHandle, ptfx = fxHandle, pos = {x = x2, y = y2, z = z2 + 0.05}, starter = started, fireTracked = fireTrackID};		
+			currentFlames[#currentFlames + 1] = {fire = fireHandle, ptfx = fxHandle, pos = {x = x2, y = y2, z = z2 + 0.05}, starter = started, fireTracked = fireTrackID, locationInd = locationIndex};		
 			curInd = curInd + 1;
 		end
-		if (Fire.Ended[fireTrackID] == nil) then 
-			Fire.Flames = currentFlames;
-		end
+		Fire.Flames = currentFlames;
 	end)
 end
 RegisterNetEvent("Fire:newFire");
@@ -227,6 +225,32 @@ RegisterCommand("fires", function(source, args, rawCommand)
 					multiline = true,
 					args = {"^3FireID: ^1" .. trackID .. " ^5||| ^3Distance: ^1" .. tostring( round(distance, 2) ) .. "^3m"}
 				})
+			end
+		end
+	end
+	tracked = {};
+	if (Config.RandomFireSpawning) then
+		TriggerEvent('chat:addMessage', {
+			color = { 255, 0, 0},
+			multiline = true,
+			args = {"^6Located fires: "}
+		  });
+		for i, flame in pairs(Fire.Flames) do
+			local locInd = flame.locationInd;
+			local trackID = flame.fireTracked;
+			if (locInd ~= nil) then
+				local locName = Config.RandomFireLocations[locInd].name;
+				local distance = GetDistanceBetweenCoords(flame.pos.x, flame.pos.y, flame.pos.z, coords.x, coords.y, coords.z, 1);
+				if (locName ~= nil) then
+					if tracked[trackID] == nil then 
+						tracked[trackID] = true;
+						TriggerEvent('chat:addMessage', {
+							color = { 255, 0, 0},
+							multiline = true,
+							args = {"^3FireID: ^1" .. trackID .. " ^5||| ^3" .. locName .. " ^5||| ^3Distance: ^1" .. tostring( round(distance, 2) ) .. "^3m"}
+						});
+					end
+				end
 			end
 		end
 	end

@@ -22,8 +22,8 @@ Citizen.CreateThread(function()
 					-- We need to check if players are in fire, then not spawn it...
 				else 
 					-- Spawn fire and announce it
-					TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale);
-					TriggerClientEvent('chatMessage', -1, Config.General.RandomFireAnnouncement:gsub("{NAME}", name));
+					TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex);
+					TriggerClientEvent('chatMessage', -1, Config.Messages.General.RandomFireAnnouncement:gsub("{NAME}", name));
 				end
 			end
 		end
@@ -270,9 +270,9 @@ function sendUsage(source)
 	TriggerClientEvent("chatMessage", source, "^1USAGE: ^5/fires ^3- List all your started fires as well as their fireIDs");
 end
 
-function newFire(posX, posY, posZ, scale, starter, fireTrackID)
+function newFire(posX, posY, posZ, scale, starter, fireTrackID, locationInd)
 	TriggerClientEvent('chatMessage', starter, Config.Messages.General.FireStarted:gsub("{STARTER_NAME}", GetPlayerName(starter)):gsub("{STARTER_ID}", starter));
-	TriggerClientEvent("Fire:newFire", -1, posX, posY, posZ, scale, starter, fireTrackID);
+	TriggerClientEvent("Fire:newFire", -1, posX, posY, posZ, scale, starter, fireTrackID, locationInd);
 end
 RegisterServerEvent("Fire:newFire");
 AddEventHandler("Fire:newFire", newFire);
