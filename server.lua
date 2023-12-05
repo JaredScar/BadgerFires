@@ -1,4 +1,5 @@
 FireTracker = {};
+LocationFireTracker = {};
 RandomFireTimer = Config.RandomFireSpawningDelay; -- Need to wait this amount of time before trying to spawn a fire
 Citizen.CreateThread(function()
 	if (Config.RandomFireSpawning) then 
@@ -9,25 +10,33 @@ Citizen.CreateThread(function()
 			if (rand <= Config.RandomFireChance) then 
 				-- It hit under the random fire chance, start a fire
 				local randomFireIndex = math.random(#Config.RandomFireLocations);
-				local randomLocation = Config.RandomFireLocations[randomFireIndex];
-				local x = randomLocation.x;
-				local y = randomLocation.y;
-				local z = randomLocation.z;
-				local name = randomLocation.name;
-				local size = randomLocation.size;
-				local flameScale = randomLocation.flameScale;
-				local density = randomLocation.density;
-				-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
-				if (Config.RandomFiresAllowedNearPlayers) then 
-					-- We need to check if players are in fire, then not spawn it...
-				else 
-					-- Spawn fire and announce it
-					TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex);
-					TriggerClientEvent('chatMessage', -1, Config.Messages.General.RandomFireAnnouncement:gsub("{NAME}", name));
+				if (LocationFireTracker[randomFireIndex] == nil) then 
+					local randomLocation = Config.RandomFireLocations[randomFireIndex];
+					local x = randomLocation.x;
+					local y = randomLocation.y;
+					local z = randomLocation.z;
+					local name = randomLocation.name;
+					local size = randomLocation.size;
+					local flameScale = randomLocation.flameScale;
+					local density = randomLocation.density;
+					-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
+					if (Config.RandomFiresAllowedNearPlayers) then 
+						-- We need to check if players are in fire, then not spawn it...
+					else 
+						-- Spawn fire and announce it
+						LocationFireTracker[randomFireIndex] = true;
+						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex);
+						TriggerClientEvent('chatMessage', -1, Config.Messages.General.RandomFireAnnouncement:gsub("{NAME}", name));
+					end
 				end
 			end
 		end
 	end
+end)
+RegisterNetEvent('BadgerFires:StopLocationFire')
+AddEventHandler('BadgerFires:StopLocationFire', function(fireLocationIndex)
+	LocationFireTracker[fireLocationIndex] = nil;
+	TriggerClientEvent("Fire:stopByLocation", -1, fireLocationIndex);
 end)
 
 RegisterCommand("fire", function(source, args, rawCommand)

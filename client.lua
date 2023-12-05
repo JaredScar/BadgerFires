@@ -158,7 +158,6 @@ AddEventHandler("Fire:start", Fire.start);
 RegisterNetEvent("Fire:startLocation");
 AddEventHandler("Fire:startLocation", Fire.startLocation);
 Fire.Flames = {};
-Fire.Ended = {};
 function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID, locationIndex)
 	-- Load the fire particle
 	if (not HasNamedPtfxAssetLoaded("core")) then
@@ -180,7 +179,10 @@ function Fire.newFire(posX, posY, posZ, scale, started, fireTrackID, locationInd
 	Citizen.CreateThread(function()
 		Citizen.Wait(0);
 		local curInd = 1;
-		while (curInd < #posX and Fire.Ended[fireTrackID] == nil) do
+		if (locationIndex ~= nil) then 
+			fireTrackID = tostring(fireTrackID) .. "L";
+		end
+		while (curInd < #posX) do
 			Citizen.Wait(0);
 			local x2 = tonumber(posX[curInd]);
 			local y2 = tonumber(posY[curInd]);
@@ -304,7 +306,6 @@ local lockingMechanism = false;
 
 function Fire.stop(fireHandle, id)
 	lockingMechanism = true;
-	Fire.Ended[tonumber(fireHandle)] = true;
 	Citizen.Wait(100);
 	local size = 0;
 	for i, flame in pairs(Fire.Flames) do 
@@ -313,7 +314,7 @@ function Fire.stop(fireHandle, id)
 	for i, flame in pairs(Fire.Flames) do
 		local continue = true;
 		if flame ~= nil then
-			if tonumber(flame.fireTracked) == tonumber(fireHandle) and tonumber(flame.starter) == tonumber(id) then
+			if tostring(flame.fireTracked) == tostring(fireHandle) and (fireHandle:find("L") or tonumber(flame.starter) == tonumber(id)) then
 				if DoesParticleFxLoopedExist(flame.ptfx) then
 					StopParticleFxLooped(flame.ptfx, 1);
 					RemoveParticleFx(flame.ptfx, 1);
@@ -346,6 +347,31 @@ function Fire.stopAll()
 end
 RegisterNetEvent("Fire:stop");
 AddEventHandler("Fire:stop", Fire.stop);
+RegisterNetEvent("Fire:stopByLocation");
+AddEventHandler("Fire:stopByLocation", Fire.stopByLocation);
+function Fire.stopByLocation(index)
+	lockingMechanism = true;
+	Citizen.Wait(100);
+	local size = 0;
+	for i, flame in pairs(Fire.Flames) do 
+		size = size + 1;
+	end
+	for i, flame in pairs(Fire.Flames) do
+		local continue = true;
+		if flame ~= nil then
+			if tonumber(flame.locationInd) == tonumber(index) then
+				if DoesParticleFxLoopedExist(flame.ptfx) then
+					StopParticleFxLooped(flame.ptfx, 1);
+					RemoveParticleFx(flame.ptfx, 1);
+				end
+				RemoveScriptFire(flame.fire);
+				StopFireInRange(flame.pos.x, flame.pos.y, flame.pos.z, 100.0);
+				Fire.Flames[i] = nil;
+			end
+		end
+	end
+	lockingMechanism = false;
+end
 RegisterNetEvent("Fire:stopall");
 AddEventHandler("Fire:stopall", Fire.stopAll);
 
