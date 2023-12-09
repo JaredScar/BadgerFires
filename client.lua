@@ -114,6 +114,7 @@ function Fire.start(distance, area, density, scale, id)
 			end
 			area_x = area_x + step;
 		end
+		TriggerServerEvent('BadgerFires:AddConcurrent', fireTrackID);
 		TriggerServerEvent("Fire:newFire", x_arr, y_arr, z_arr, scale, id, fireTrackID, nil);
 	end)
 	fireTrackID = fireTrackID + 1;

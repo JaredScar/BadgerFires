@@ -22,6 +22,8 @@ Citizen.CreateThread(function()
 					-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
 					if (Config.RandomFiresAllowedNearPlayers) then 
 						-- We need to check if players are in fire, then not spawn it...
+						-- TODO
+						LocationFireTracker[randomFireIndex] = true;
 					else 
 						-- Spawn fire and announce it
 						LocationFireTracker[randomFireIndex] = true;
@@ -31,6 +33,16 @@ Citizen.CreateThread(function()
 				end
 			end
 		end
+	end
+end)
+RegisterNetEvent('BadgerFires:AddConcurrent')
+AddEventHandler('BadgerFires:AddConcurrent', function(firetrackID)
+	local src = source;
+	if (FireTracker[src] ~= nil) then 
+		FireTracker[src][fireTrackID] = true;
+	else
+		FireTracker[src] = {};
+		FireTracker[src][fireTrackID] = true; 
 	end
 end)
 RegisterNetEvent('BadgerFires:StopLocationFire')
@@ -64,9 +76,11 @@ RegisterCommand("fire", function(source, args, rawCommand)
 		local size = tonumber(args[3]);
 		local density = tonumber(args[4]);
 		local flameScale = tonumber(args[5]);
-		local concurrent = FireTracker[src];
-		if concurrent == nil then 
-			concurrent = 0;
+		local concurrents = FireTracker[src];
+		if concurrents == nil then 
+			concurrents = 0;
+		else
+			concurrents = #concurrents; 
 		end
 		if size == nil or density == nil or flameScale == nil then 
 			-- Invalid
@@ -75,7 +89,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 		end
 		if Config.AnyoneCanUse then 
 			local maxConcurrent = Config.Concurrent;
-			if concurrent == maxConcurrent then 
+			if concurrents == maxConcurrent then 
 				-- They have enough fires running already
 				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)));
 				return;
@@ -99,7 +113,6 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				return;
 			end
 			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5], src);
-			FireTracker[src] = concurrent + 1;
 			TriggerClientEvent('chatMessage', src, Config.Messages.General.FireStarting);
 			return;
 		else 
@@ -127,15 +140,17 @@ RegisterCommand("fire", function(source, args, rawCommand)
 					end
 				end 
 			end
-			local concurrent = FireTracker[src];
-			if concurrent == nil then 
-				concurrent = 0;
+			local concurrents = FireTracker[src];
+			if concurrents == nil then 
+				concurrents = 0;
+			else
+				concurrents = #concurrents; 
 			end
 			if not hasPerms then
 				TriggerClientEvent('chatMessage', src, Config.Messages.Error.No_Permission); 
 				return;
 			end
-			if concurrent == maxConcurrent then 
+			if concurrents == maxConcurrent then 
 				-- They have enough fires running already
 				TriggerClientEvent('chatMessage', src, Config.Messages.Error.ConcurrentFiresReached:gsub("{MAX_CONCURRENT}", tostring(maxConcurrent)));
 				return;
@@ -156,7 +171,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 				return;
 			end
 			TriggerClientEvent("Fire:start", src, args[2], args[3], args[4], args[5], src);
-			FireTracker[src] = concurrent + 1;
+			FireTracker[src] = {};
 			TriggerClientEvent('chatMessage', src, Config.Messages.General.FireStarting);
 			return;
 		end
@@ -167,13 +182,14 @@ RegisterCommand("fire", function(source, args, rawCommand)
 			sendUsage(src);
 			return;
 		end
-		local concurrent = FireTracker[src];
-		if concurrent ~= nil then 
-			if concurrent > 0 then 
-				FireTracker[src] = concurrent - 1;
+		local concurrents = FireTracker[src];
+		-- If it contains L, then they need a permission to stop the location based fire...
+		if (not args[2]:find("L") or IsPlayerAceAllowed(src, "")) then
+			if (FireTracker[src][args[2]] ~= nil) then
+				FireTracker[src][args[2]] = nil;
 			end
-		end
 			TriggerClientEvent("Fire:stop", -1, args[2], src);
+		end
 	elseif args[1] == "preview" then 
 		if #args ~= 5 then 
 			TriggerClientEvent('chatMessage', src, '^1[^5BadgerFires^1] ^2Preview Mode ^3has been ^1DISABLED^3...');
