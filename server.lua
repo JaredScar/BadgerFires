@@ -22,18 +22,21 @@ Citizen.CreateThread(function()
 					-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
 					if (Config.RandomFiresAllowedNearPlayers) then 
 						-- We need to check if players are in fire, then not spawn it...
-						-- TODO
-						LocationFireTracker[randomFireIndex] = true;
+						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex, true);
 					else 
 						-- Spawn fire and announce it
 						LocationFireTracker[randomFireIndex] = true;
-						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex);
+						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex, false);
 						TriggerClientEvent('chatMessage', -1, Config.Messages.General.RandomFireAnnouncement:gsub("{NAME}", name));
 					end
 				end
 			end
 		end
 	end
+end)
+RegisterNetEvent('BadgerFires:AddLocationFire')
+AddEventHandler('BadgerFires:AddLocationFire', function(fireIndex)
+	LocationFireTracker[fireIndex] = true;
 end)
 RegisterNetEvent('BadgerFires:AddConcurrent')
 AddEventHandler('BadgerFires:AddConcurrent', function(firetrackID)

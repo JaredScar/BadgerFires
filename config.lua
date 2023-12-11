@@ -26,7 +26,7 @@ Config = {
         { name = 'Church @ 631', x = -1680.76, y = -282.07, z = 51.86, size = 30, density = 30, flameScale = 30 },
     },
     RandomFiresAllowedNearPlayers = false, -- If a random fire spawns, should it still trigger if players are within it?
-    VehicleEngineFires = true
+    VehicleEngineFires = true -- Needs to be tested...
     --[[]]--
 }
 

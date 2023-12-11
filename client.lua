@@ -119,7 +119,7 @@ function Fire.start(distance, area, density, scale, id)
 	end)
 	fireTrackID = fireTrackID + 1;
 end
-function Fire.startLocation(x, y, z, distance, area, density, scale, locationInd)
+function Fire.startLocation(x, y, z, distance, area, density, scale, locationInd, playersMatter)
 	local area_x = x - area/2;
 	local area_y = y - area/2;
 	local area_x_max = x + area/2;
@@ -149,10 +149,27 @@ function Fire.startLocation(x, y, z, distance, area, density, scale, locationInd
 			end
 			area_x = area_x + step;
 		end
-		-- Start new fire at location specified...
-		Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID, locationInd)
+		-- Check if any player is in the circle
+		if playersMatter and IsAnyPlayerInCircle(area_x, area_y, distance) then
+			-- Do not start a fire... Players were in the area...
+		else
+			-- Start new fire at location specified...
+			TriggerServerEvent('BadgerFires:AddLocationFire', locationInd);
+			Fire.newFire(x_arr, y_arr, z_arr, scale, nil, fireTrackID, locationInd);
+			fireTrackID = fireTrackID + 1;
+		end
 	end)
-	fireTrackID = fireTrackID + 1;
+end
+function IsAnyPlayerInCircle(circleX, circleY, radius)
+    local players = GetPlayers()
+    for _, player in ipairs(players) do
+        local playerX, playerY, _, _, _ = table.unpack(GetEntityCoords(GetPlayerPed(-1), false))
+        local distance = GetDistanceBetweenCoords(playerX, playerY, 0, circleX, circleY, 0, false)
+        if distance <= radius then
+            return true
+        end
+    end
+    return false
 end
 RegisterNetEvent("Fire:start");
 AddEventHandler("Fire:start", Fire.start);
