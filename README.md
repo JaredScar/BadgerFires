@@ -13,7 +13,7 @@ I make plenty of resources for these forums free of charge all for everyone's co
 
 `/fire preview <inFrontDistance> <size> <density> <flameScale>` - Previews a fire's size
 
-`/fire stop <ID>` - Stops a fire based off it's ID
+`/fire stop <ID>` - Stops a fire based off it's ID -- Requires permission `BadgerFires.Stop.Location` to stop fires that are location based...
 
 `/fire stopall` - Requires the BadgerFires.StopAll permission node
 

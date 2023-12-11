@@ -187,7 +187,7 @@ RegisterCommand("fire", function(source, args, rawCommand)
 		end
 		local concurrents = FireTracker[src];
 		-- If it contains L, then they need a permission to stop the location based fire...
-		if (not args[2]:find("L") or IsPlayerAceAllowed(src, "")) then
+		if (not args[2]:find("L") or IsPlayerAceAllowed(src, "BadgerFires.Stop.Location")) then
 			if (FireTracker[src][args[2]] ~= nil) then
 				FireTracker[src][args[2]] = nil;
 			end
