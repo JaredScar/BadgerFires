@@ -22,7 +22,17 @@ Citizen.CreateThread(function()
 					-- TODO Need to check to make sure no players are within the size of this fire before trying to spawn...
 					if (Config.RandomFiresAllowedNearPlayers) then 
 						-- We need to check if players are in fire, then not spawn it...
-						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex, true);
+						local startFire = true;
+						for _, plyer in pairs(GetPlayers()) do 
+							if not IsPlayerOutsideArea(plyer, {x = x, y = y, z = z}, size) then 
+								startFire = false;
+							end
+						end
+						if (startFire) then
+							LocationFireTracker[randomFireIndex] = true;
+							TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex, true);
+							TriggerClientEvent('chatMessage', -1, Config.Messages.General.RandomFireAnnouncement:gsub("{NAME}", name));
+						end
 					else 
 						-- Spawn fire and announce it
 						LocationFireTracker[randomFireIndex] = true;
@@ -34,6 +44,27 @@ Citizen.CreateThread(function()
 		end
 	end
 end)
+-- Function to check if a player is outside a specified area
+function IsPlayerOutsideArea(player, startCoords, size)
+    local playerCoords = GetEntityCoords(GetPlayerPed(player))
+    
+    local minX = startCoords.x - size
+    local minY = startCoords.y - size
+    local minZ = startCoords.z - size
+
+    local maxX = startCoords.x + size
+    local maxY = startCoords.y + size
+    local maxZ = startCoords.z + size
+
+    return (
+        playerCoords.x < minX or
+        playerCoords.y < minY or
+        playerCoords.z < minZ or
+        playerCoords.x > maxX or
+        playerCoords.y > maxY or
+        playerCoords.z > maxZ
+    )
+end
 RegisterNetEvent('BadgerFires:AddLocationFire')
 AddEventHandler('BadgerFires:AddLocationFire', function(fireIndex)
 	LocationFireTracker[fireIndex] = true;
