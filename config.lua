@@ -6,6 +6,7 @@ Config = {
     Concurrent = 1,
     AnyoneCanUse = true, -- Anyone can use it? -- THIS WILL DISABLE PERMISSIONS
     RandomFireSpawning = true, -- Fires spawn randomly?
+    RandomFiresConcurrent = 1, -- Only allow 1 random fire concurrently?
     RandomFireSpawningDelay = 1, -- After a fire randomly spawns, 1 minutes must pass before another one can be spawned
     RandomFireChance = 99, -- 99% chance of a fire starting
     RandomFireLocations = {

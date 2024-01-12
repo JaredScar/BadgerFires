@@ -1,6 +1,7 @@
 FireTracker = {};
 LocationFireTracker = {};
 RandomFireTimer = Config.RandomFireSpawningDelay; -- Need to wait this amount of time before trying to spawn a fire
+latestFire = 1;
 Citizen.CreateThread(function()
 	if (Config.RandomFireSpawning) then 
 		while (true) do 
@@ -10,7 +11,20 @@ Citizen.CreateThread(function()
 			if (rand <= Config.RandomFireChance) then 
 				-- It hit under the random fire chance, start a fire
 				local randomFireIndex = math.random(#Config.RandomFireLocations);
-				if (LocationFireTracker[randomFireIndex] == nil) then 
+				if (LocationFireTracker[randomFireIndex] == nil) then
+					local currentFireCount = 0;
+					local notLatestFire = -1;
+					for fireIndex, latestFireId in pairs(LocationFireTracker) do 
+						currentFireCount = currentFireCount + 1;
+						if (latestFireId == -1 or latestFireId < latestFireId) then 
+							notLatestFire = fireIndex;
+						end
+					end
+					if (Config.RandomFiresConcurrent <= currentFireCount and notLatestFire ~= -1) then 
+						-- Too many fires, we need to get rid of one...
+						LocationFireTracker[notLatestFire] = nil;
+						TriggerClientEvent("Fire:stopByLocation", -1, notLatestFire);
+					end
 					local randomLocation = Config.RandomFireLocations[randomFireIndex];
 					local x = randomLocation.x;
 					local y = randomLocation.y;
@@ -35,7 +49,8 @@ Citizen.CreateThread(function()
 						end
 					else 
 						-- Spawn fire and announce it
-						LocationFireTracker[randomFireIndex] = true;
+						LocationFireTracker[randomFireIndex] = latestFire;
+						latestFire = latestFire + 1;
 						TriggerClientEvent("Fire:startLocation", -1, x, y, z, 0, size, density, flameScale, randomFireIndex, false);
 						TriggerClientEvent('chatMessage', -1, Config.Messages.General.RandomFireAnnouncement:gsub("{NAME}", name));
 					end
